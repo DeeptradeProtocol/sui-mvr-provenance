@@ -62004,6 +62004,7 @@ const mvrResolver_1 = __nccwpck_require__(19076);
 const main = async () => {
     const config = await (0, load_1.loadMvrConfig)();
     const provenance = await (0, load_1.loadProvenance)();
+    const params = await (0, load_1.loadParamsJson)();
     const deploy = await (0, load_1.loadDeploy)();
     const { signer, isGitSigner } = await (0, getSigner_1.getSigner)(config);
     if (config.app_name && config.app_name.split('/').length !== 2) {
@@ -62063,7 +62064,7 @@ const main = async () => {
             target: `${cache['@mvr/core']}::move_registry::register`,
             arguments: [registry, nftId, transaction.pure.string(pkgName), transaction.object.clock()],
         });
-        transaction.add((0, mvrMetadatas_1.setAllMetadata)(`${cache['@mvr/core']}::move_registry::set_metadata`, registry, appCap, config, deploy.digest, provenance));
+        transaction.add((0, mvrMetadatas_1.setCoreMetadata)(cache['@mvr/core'], registry, appCap, config));
         const packageInfo = transaction.moveCall({
             target: `${cache['@mvr/metadata']}::package_info::new`,
             arguments: [transaction.object(deploy.upgrade_cap)],
@@ -62080,6 +62081,7 @@ const main = async () => {
             target: `${cache['@mvr/metadata']}::package_info::set_git_versioning`,
             arguments: [packageInfo, transaction.pure.u64(version), git],
         });
+        transaction.add((0, mvrMetadatas_1.setPkgMetadata)(cache['@mvr/metadata'], registry, appCap, deploy.digest, provenance, params));
         transaction.moveCall({
             target: `${cache['@mvr/core']}::move_registry::assign_package`,
             arguments: [registry, appCap, packageInfo],
@@ -62129,8 +62131,10 @@ const main = async () => {
         const registry = transaction.object(registryObj.targetAddress);
         const appCap = transaction.object(config.app_cap);
         const packageInfo = transaction.object(config.pkg_info);
-        transaction.add(await (0, mvrMetadatas_1.unsetAllMetadata)(config.network, config.app_name, `${cache['@mvr/core']}::move_registry::unset_metadata`, registry, appCap));
-        transaction.add((0, mvrMetadatas_1.setAllMetadata)(`${cache['@mvr/core']}::move_registry::set_metadata`, registry, appCap, config, deploy.digest, provenance));
+        transaction.add(await (0, mvrMetadatas_1.unsetAllMetadata)(config.network, config.app_name, {
+            core: cache['@mvr/core'],
+            pkg: cache['@mvr/metadata'],
+        }, registry, appCap));
         const gitVersion = await (0, load_1.loadGitVersion)(config.pkg_info, version, client);
         transaction.moveCall({
             target: `${cache['@mvr/metadata']}::package_info::unset_git_versioning`,
@@ -62148,6 +62152,7 @@ const main = async () => {
             target: `${cache['@mvr/metadata']}::package_info::set_git_versioning`,
             arguments: [packageInfo, transaction.pure.u64(version), git],
         });
+        transaction.add((0, mvrMetadatas_1.setPkgMetadata)(cache['@mvr/metadata'], registry, appCap, deploy.digest, provenance, params));
         const { input } = await client.dryRunTransactionBlock({
             transactionBlock: await transaction.build({ client }),
         });
@@ -62613,7 +62618,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.loadGitVersion = exports.loadUpgradeCap = exports.loadProvenance = exports.loadDeploy = exports.loadBytecodeDump = exports.loadMvrConfig = void 0;
+exports.loadGitVersion = exports.loadUpgradeCap = exports.loadProvenance = exports.loadDeploy = exports.loadParamsJson = exports.loadBytecodeDump = exports.loadMvrConfig = void 0;
 const promises_1 = __importDefault(__nccwpck_require__(91943));
 const path_1 = __importDefault(__nccwpck_require__(16928));
 const core = __importStar(__nccwpck_require__(37484));
@@ -62630,6 +62635,18 @@ const loadBytecodeDump = async () => {
     return JSON.parse(dumpRaw);
 };
 exports.loadBytecodeDump = loadBytecodeDump;
+const loadParamsJson = async () => {
+    try {
+        const paramsPath = path_1.default.resolve('../params.json');
+        const paramsRaw = await promises_1.default.readFile(paramsPath, 'utf-8');
+        return paramsRaw;
+    }
+    catch (err) {
+        core.warning(`[loadParamsJson] Failed to load params.json: ${err}`);
+        return null;
+    }
+};
+exports.loadParamsJson = loadParamsJson;
 const loadDeploy = async () => {
     const dumpPath = path_1.default.resolve('../deploy.json');
     const dumpRaw = await promises_1.default.readFile(dumpPath, 'utf-8');
@@ -62695,7 +62712,7 @@ exports.loadGitVersion = loadGitVersion;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.unsetAllMetadata = exports.setAllMetadata = void 0;
+exports.unsetAllMetadata = exports.setPkgMetadata = exports.setCoreMetadata = void 0;
 const splitBase64ByByteLength = (base64, maxBytes) => {
     const encoder = new TextEncoder();
     const bytes = encoder.encode(base64);
@@ -62706,8 +62723,7 @@ const splitBase64ByByteLength = (base64, maxBytes) => {
     }
     return chunks;
 };
-const setAllMetadata = (metadataTarget, registry, appCap, config, tx_digest, provenance) => {
-    const chunks = splitBase64ByByteLength(provenance, 16380);
+const setCoreMetadata = (target, registry, appCap, config) => {
     const keys = [
         ['description', config.app_desc],
         ['homepage_url', config.homepage_url ?? (process.env.GIT_REPO || '')],
@@ -62716,21 +62732,36 @@ const setAllMetadata = (metadataTarget, registry, appCap, config, tx_digest, pro
             config.documentation_url ?? (process.env.GIT_REPO ? `${process.env.GIT_REPO}#readme` : ''),
         ],
         ['icon_url', config.icon_url || ''],
-        ['contact', config.contact || ''],
-        ['tx_digest', tx_digest],
-        ...chunks.map((chunk, i) => [`provenance_${i}`, chunk]),
     ];
     return (transaction) => {
         for (const [key, value] of keys) {
             transaction.moveCall({
-                target: metadataTarget,
+                target: `${target}::move_registry::set_metadata`,
                 arguments: [registry, appCap, transaction.pure.string(key), transaction.pure.string(value)],
             });
         }
     };
 };
-exports.setAllMetadata = setAllMetadata;
-const unsetAllMetadata = async (network, name, metadataTarget, registry, appCap) => {
+exports.setCoreMetadata = setCoreMetadata;
+const setPkgMetadata = (target, registry, appCap, tx_digest, provenance, params = null) => {
+    const prov_chunks = splitBase64ByByteLength(provenance, 16380);
+    const params_chunks = params ? splitBase64ByByteLength(params, 16380) : [];
+    const keys = [
+        ['prov_tx_', tx_digest],
+        ...prov_chunks.map((chunk, i) => [`prov_jsonl_${i}`, chunk]),
+        ...params_chunks.map((chunk, i) => [`prov_params_${i}`, chunk]),
+    ];
+    return (transaction) => {
+        for (const [key, value] of keys) {
+            transaction.moveCall({
+                target: `${target}::package_info::set_metadata`,
+                arguments: [registry, appCap, transaction.pure.string(key), transaction.pure.string(value)],
+            });
+        }
+    };
+};
+exports.setPkgMetadata = setPkgMetadata;
+const unsetAllMetadata = async (network, name, target, registry, appCap) => {
     const url = `https://${network}.mvr.mystenlabs.com/v1/names/${name}`;
     const maxRetries = 5;
     const delayMs = 2000;
@@ -62752,11 +62783,18 @@ const unsetAllMetadata = async (network, name, metadataTarget, registry, appCap)
             await new Promise(res => setTimeout(res, delayMs));
         }
     }
-    const keys = Object.keys(json?.metadata || {});
+    const coreKeys = Object.keys(json?.metadata || {});
+    const pkgKeys = Object.keys(json?.package_info || {});
     return (transaction) => {
-        for (const key of keys) {
+        for (const key of coreKeys) {
             transaction.moveCall({
-                target: metadataTarget,
+                target: `${target.core}::move_registry::unset_metadata`,
+                arguments: [registry, appCap, transaction.pure.string(key)],
+            });
+        }
+        for (const key of pkgKeys) {
+            transaction.moveCall({
+                target: `${target.pkg}::package_info::unset_metadata`,
                 arguments: [registry, appCap, transaction.pure.string(key)],
             });
         }
