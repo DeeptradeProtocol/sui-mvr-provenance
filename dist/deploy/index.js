@@ -57863,7 +57863,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.loadGitVersion = exports.loadUpgradeCap = exports.loadProvenance = exports.loadDeploy = exports.loadBytecodeDump = exports.loadMvrConfig = void 0;
+exports.loadGitVersion = exports.loadUpgradeCap = exports.loadProvenance = exports.loadDeploy = exports.loadParamsJson = exports.loadBytecodeDump = exports.loadMvrConfig = void 0;
 const promises_1 = __importDefault(__nccwpck_require__(1943));
 const path_1 = __importDefault(__nccwpck_require__(6928));
 const core = __importStar(__nccwpck_require__(7484));
@@ -57880,6 +57880,18 @@ const loadBytecodeDump = async () => {
     return JSON.parse(dumpRaw);
 };
 exports.loadBytecodeDump = loadBytecodeDump;
+const loadParamsJson = async () => {
+    try {
+        const paramsPath = path_1.default.resolve('../params.json');
+        const paramsRaw = await promises_1.default.readFile(paramsPath, 'utf-8');
+        return paramsRaw;
+    }
+    catch (err) {
+        core.warning(`[loadParamsJson] Failed to load params.json: ${err}`);
+        return null;
+    }
+};
+exports.loadParamsJson = loadParamsJson;
 const loadDeploy = async () => {
     const dumpPath = path_1.default.resolve('../deploy.json');
     const dumpRaw = await promises_1.default.readFile(dumpPath, 'utf-8');

@@ -38,12 +38,14 @@
     "test": "jest",
     "ci-test": "jest",
     "coverage": "jest --coverage",
-    "build": "rimraf dist && npx ncc build src/deploy.ts -o dist/deploy && npx ncc build src/register.ts -o dist/register"
+    "build": "rimraf dist && npx ncc build src/deploy.ts -o dist/deploy && npx ncc build src/register.ts -o dist/register && npx ncc build src/extract.ts -o dist/extract && cp ./node_modules/@mysten/prettier-plugin-move/tree-sitter-move.wasm dist/extract"
   },
   "dependencies": {
     "@actions/core": "^1.11.1",
+    "@mysten/prettier-plugin-move": "^0.3.1",
     "@mysten/sui": "^1.29.1",
-    "@mysten/suins": "^0.7.15"
+    "@mysten/suins": "^0.7.15",
+    "web-tree-sitter": "^0.25.8"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",

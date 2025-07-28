@@ -10,14 +10,16 @@ import {
   loadGitVersion,
   loadMvrConfig,
   loadProvenance,
+  loadParamsJson,
   loadUpgradeCap,
 } from './utils/load';
-import { setAllMetadata, unsetAllMetadata } from './utils/mvrMetadatas';
+import { setCoreMetadata, setPkgMetadata, unsetAllMetadata } from './utils/mvrMetadatas';
 import { mvrResolver } from './utils/mvrResolver';
 
 const main = async () => {
   const config = await loadMvrConfig();
   const provenance = await loadProvenance();
+  const params = await loadParamsJson();
   const deploy = await loadDeploy();
 
   const { signer, isGitSigner } = await getSigner(config);
@@ -99,16 +101,7 @@ const main = async () => {
       arguments: [registry, nftId, transaction.pure.string(pkgName), transaction.object.clock()],
     });
 
-    transaction.add(
-      setAllMetadata(
-        `${cache['@mvr/core']}::move_registry::set_metadata`,
-        registry,
-        appCap,
-        config,
-        deploy.digest,
-        provenance,
-      ),
-    );
+    transaction.add(setCoreMetadata(cache['@mvr/core'], registry, appCap, config));
 
     const packageInfo = transaction.moveCall({
       target: `${cache['@mvr/metadata']}::package_info::new`,
@@ -128,6 +121,10 @@ const main = async () => {
       target: `${cache['@mvr/metadata']}::package_info::set_git_versioning`,
       arguments: [packageInfo, transaction.pure.u64(version), git],
     });
+
+    transaction.add(
+      setPkgMetadata(cache['@mvr/metadata'], registry, appCap, deploy.digest, provenance, params),
+    );
 
     transaction.moveCall({
       target: `${cache['@mvr/core']}::move_registry::assign_package`,
@@ -197,20 +194,12 @@ const main = async () => {
       await unsetAllMetadata(
         config.network,
         config.app_name,
-        `${cache['@mvr/core']}::move_registry::unset_metadata`,
+        {
+          core: cache['@mvr/core'],
+          pkg: cache['@mvr/metadata'],
+        },
         registry,
         appCap,
-      ),
-    );
-
-    transaction.add(
-      setAllMetadata(
-        `${cache['@mvr/core']}::move_registry::set_metadata`,
-        registry,
-        appCap,
-        config,
-        deploy.digest,
-        provenance,
       ),
     );
 
@@ -234,6 +223,10 @@ const main = async () => {
       target: `${cache['@mvr/metadata']}::package_info::set_git_versioning`,
       arguments: [packageInfo, transaction.pure.u64(version), git],
     });
+
+    transaction.add(
+      setPkgMetadata(cache['@mvr/metadata'], registry, appCap, deploy.digest, provenance, params),
+    );
 
     const { input } = await client.dryRunTransactionBlock({
       transactionBlock: await transaction.build({ client }),
