@@ -67,7 +67,7 @@ export const setPkgMetadata = (
       },
   tx_digest: string,
   provenance: string,
-  params?: string,
+  params: string | null = null,
 ): ((tx: Transaction) => void) => {
   const prov_chunks = splitBase64ByByteLength(provenance, 16380);
   const params_chunks = params ? splitBase64ByByteLength(params, 16380) : [];
