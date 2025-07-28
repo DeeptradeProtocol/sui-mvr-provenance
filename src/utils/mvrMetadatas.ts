@@ -99,6 +99,11 @@ export const unsetAllMetadata = async (
     Input: number;
     type?: 'object';
   },
+  packageInfo: {
+    $kind: 'Input';
+    Input: number;
+    type?: 'object';
+  },
   appCap:
     | TransactionResult
     | {
@@ -141,7 +146,7 @@ export const unsetAllMetadata = async (
     for (const key of pkgKeys) {
       transaction.moveCall({
         target: `${target.pkg}::package_info::unset_metadata`,
-        arguments: [registry, appCap, transaction.pure.string(key)],
+        arguments: [packageInfo, transaction.pure.string(key)],
       });
     }
   };
