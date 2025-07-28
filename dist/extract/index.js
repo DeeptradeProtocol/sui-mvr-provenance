@@ -25723,12 +25723,12 @@ const extractFromFile = async (filePath, parser) => {
     return { moduleName, functions };
 };
 const main = async () => {
-    const MOVE_DIR = process.env.MOVE_DIR;
-    const WASM_DIR = path_1.default.resolve(__dirname, 'tree-sitter-move.wasm');
-    if (!MOVE_DIR) {
+    if (!process.env.MOVE_DIR) {
         core.warning('Skipping extraction from MOVE_DIR as it is not set in the environment variables.');
     }
     else {
+        const MOVE_DIR = path_1.default.join(process.env.MOVE_DIR ?? '.', 'sources');
+        const WASM_DIR = path_1.default.resolve(__dirname, 'tree-sitter-move.wasm');
         await web_tree_sitter_1.Parser.init();
         const parser = new web_tree_sitter_1.Parser();
         const MoveLang = await web_tree_sitter_1.Language.load(WASM_DIR);
@@ -25738,10 +25738,17 @@ const main = async () => {
         for (const file of files) {
             const fullPath = path_1.default.join(MOVE_DIR, file);
             const { moduleName, functions } = await extractFromFile(fullPath, parser);
-            result[moduleName] = functions;
+            if (functions.length > 0) {
+                result[moduleName] = functions;
+            }
         }
-        const outputPath = path_1.default.resolve('./params.json');
-        await promises_1.default.writeFile(outputPath, JSON.stringify(result), 'utf-8');
+        if (Object.keys(result).length === 0) {
+            core.warning('No functions found in the provided MOVE files.');
+        }
+        else {
+            const outputPath = path_1.default.resolve('./params.json');
+            await promises_1.default.writeFile(outputPath, JSON.stringify(result), 'utf-8');
+        }
     }
 };
 main().catch(err => {
