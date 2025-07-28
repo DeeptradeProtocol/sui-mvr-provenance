@@ -78,13 +78,6 @@ jobs:
           name: mvr.config.json
           path: .
 
-      - name: Try downloading param names (optional)
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: params.json
-          path: .
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -208,6 +201,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: deploy.json
+          path: .
+
+      - name: Try downloading param names (optional)
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: params.json
           path: .
 
       - name: Set up Node.js
