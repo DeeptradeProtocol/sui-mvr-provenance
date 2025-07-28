@@ -27,6 +27,38 @@ jobs:
         with:
           working-directory: ${{ inputs.working-directory }}
 
+  extract:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout caller repo
+        uses: actions/checkout@v4
+        with:
+          path: move-src
+
+      - name: Checkout provenance tool
+        uses: actions/checkout@v4
+        with:
+          repository: zktx-io/sui-mvr-provenance
+          ref: v0.2.7
+          path: provenance
+
+      - name: Install dependencies
+        working-directory: provenance
+        run: npm ci
+
+      - name: Extract Move function params
+        working-directory: provenance
+        env:
+          MOVE_DIR: ${{ github.workspace }}/move-src/${{ inputs.working-directory }}
+        run: node dist/extract/index.js
+
+      - name: Upload extracted params.json
+        uses: actions/upload-artifact@v4
+        with:
+          name: params.json
+          path: provenance/params.json
+
   deploy-sign:
     runs-on: ubuntu-latest
     needs: build
@@ -44,6 +76,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: mvr.config.json
+          path: .
+
+      - name: Try downloading param names (optional)
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: params.json
           path: .
 
       - name: Set up Node.js
