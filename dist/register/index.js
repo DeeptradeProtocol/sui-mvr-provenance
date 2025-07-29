@@ -62640,7 +62640,7 @@ const loadParamsJson = async () => {
     try {
         const paramsPath = path_1.default.resolve('../params.json');
         const paramsRaw = await promises_1.default.readFile(paramsPath, 'utf-8');
-        return paramsRaw;
+        return (0, utils_1.toBase64)(new TextEncoder().encode(paramsRaw));
     }
     catch (err) {
         core.warning(`[loadParamsJson] Failed to load params.json: ${err}`);
