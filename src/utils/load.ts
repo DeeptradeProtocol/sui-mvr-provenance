@@ -23,7 +23,7 @@ export const loadParamsJson = async (): Promise<string | null> => {
   try {
     const paramsPath = path.resolve('../params.json');
     const paramsRaw = await fs.readFile(paramsPath, 'utf-8');
-    return paramsRaw;
+    return toBase64(new TextEncoder().encode(paramsRaw));
   } catch (err) {
     core.warning(`[loadParamsJson] Failed to load params.json: ${err}`);
     return null;
