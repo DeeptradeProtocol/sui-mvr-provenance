@@ -67,7 +67,7 @@ export const setPkgMetadata = (
   const prov_chunks = splitBase64ByByteLength(provenance, 16380);
   const params_chunks = params ? splitBase64ByByteLength(params, 16380) : [];
   const keys: [string, string][] = [
-    ['prov_tx_', tx_digest],
+    ['prov_tx', tx_digest],
     ...prov_chunks.map((chunk, i): [string, string] => [`prov_jsonl_${i}`, chunk]),
     ...params_chunks.map((chunk, i): [string, string] => [`prov_params_${i}`, chunk]),
   ];
