@@ -204,6 +204,8 @@ const main = async () => {
       ),
     );
 
+    transaction.add(setCoreMetadata(cache['@mvr/core'], registry, appCap, config));
+
     const gitVersion = await loadGitVersion(config.pkg_info, version, client);
 
     transaction.moveCall({
