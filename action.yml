@@ -10,6 +10,10 @@ inputs:
     description: 'Path to the Move project directory (should contain Move.toml)'
     required: true
     default: '.'
+  sui-version:
+    description: 'Version of Sui to install'
+    required: true
+    default: '1.62.1'
 
 runs:
   using: 'composite'
