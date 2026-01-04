@@ -17,15 +17,13 @@ runs:
     - name: Set up Homebrew (for installing Sui CLI)
       uses: Homebrew/actions/setup-homebrew@master
 
-    - name: Install Sui v${{ env.SUI_VERSION }}
-      env:
-        SUI_VERSION: "1.62.1" # Parameterized Sui version
+    - name: Install Sui v${{ inputs.sui-version }}
       shell: bash
       run: |
-        echo "Installing Sui v${{ env.SUI_VERSION }}..."
+        echo "Installing Sui v${{ inputs.sui-version }}..."
         mkdir -p $HOME/sui-bin
 
-        SUI_URL="https://github.com/MystenLabs/sui/releases/download/mainnet-v${{ env.SUI_VERSION }}/sui-mainnet-v${{ env.SUI_VERSION }}-ubuntu-x86_64.tgz"
+        SUI_URL="https://github.com/MystenLabs/sui/releases/download/mainnet-v${{ inputs.sui-version }}/sui-mainnet-v${{ inputs.sui-version }}-ubuntu-x86_64.tgz"
         echo "Downloading Sui from $SUI_URL"
 
         # Use curl with fail flag and check response

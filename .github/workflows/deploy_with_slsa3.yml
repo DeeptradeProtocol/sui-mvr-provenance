@@ -12,7 +12,10 @@ on:
         required: false
         type: string
         default: '.'
-
+      sui-version:
+        required: false
+        type: string
+        default: '1.62.1'
     secrets:
       GIT_SIGNER_PIN:
         required: false
