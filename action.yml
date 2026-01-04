@@ -78,9 +78,8 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        echo "Running sui move build... (with bytecode dump)"
         cd "${{ inputs.working-directory }}"
-        echo "Running sui move build..."
+        echo "Running sui move build... (with bytecode dump)"
         sui move build --dump-bytecode-as-base64 >> bytecode.dump.json
         echo "Sui move build completed. Bytecode dump saved to bytecode.dump.json"
 
