@@ -55,11 +55,9 @@ runs:
     - name: Build Move Package
       shell: bash
       run: |
-        # set -euo pipefail
         cd "${{ inputs.working-directory }}"
         echo "Running sui move build..."
         sui move build --dump-bytecode-as-base64 >> bytecode.dump.json
-        # sui move build
 
     - name: Upload Bytecode Dump
       uses: actions/upload-artifact@v4
