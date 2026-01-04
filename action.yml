@@ -52,12 +52,23 @@ runs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Build Move Package (without bytecode dump)
+      shell: bash
+      run: |
+        echo "Running sui move build... (without bytecode dump)"
+        cd "${{ inputs.working-directory }}"
+        echo "Running sui move build..."
+        sui move build
+        echo "Sui move build completed (without bytecode dump)"
+
     - name: Build Move Package
       shell: bash
       run: |
+        echo "Running sui move build... (with bytecode dump)"
         cd "${{ inputs.working-directory }}"
         echo "Running sui move build..."
         sui move build --dump-bytecode-as-base64 >> bytecode.dump.json
+        echo "Sui move build completed. Bytecode dump saved to bytecode.dump.json"
 
     - name: Upload Bytecode Dump
       uses: actions/upload-artifact@v4
