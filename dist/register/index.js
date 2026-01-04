@@ -62478,7 +62478,6 @@ const main = async () => {
     });
     const { version } = await (0, load_1.loadUpgradeCap)(deploy.upgrade_cap, client);
     const record = await suinsClient.getNameRecord(suins.endsWith('.sui') ? suins : `${suins}.sui`);
-    console.log('record', record);
     if (!record) {
         core.setFailed(`❌ Name record not found for ${suins}`);
         process.exit(1);
@@ -62503,7 +62502,6 @@ const main = async () => {
     }
     const registryObj = await suinsClient.getNameRecord('registry-obj@mvr');
     const cache = await (0, mvrResolver_1.mvrResolver)(['@mvr/core', '@mvr/metadata', config.app_name], config.network);
-    console.log('cache', cache);
     if (!registryObj || !registryObj.targetAddress) {
         core.setFailed(`❌ Registry object not found`);
         process.exit(1);
@@ -62551,13 +62549,10 @@ const main = async () => {
             arguments: [packageInfo, recipient],
         });
         transaction.transferObjects([appCap], recipient);
-        console.log('dryRunTransactionBlock 1');
-        console.log('transaction', JSON.stringify(transaction.getData(), null, 2));
         const { input } = await client.dryRunTransactionBlock({
             transactionBlock: await transaction.build({ client }),
         });
         transaction.setGasBudget(parseInt(input.gasData.budget));
-        console.log('signAndExecuteTransaction 1');
         const { digest: txDigest } = await client.signAndExecuteTransaction({
             signer,
             transaction,
