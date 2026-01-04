@@ -1,18 +1,18 @@
-name: "Sui MVR Provenance"
-description: "Builds a Move package using the Sui CLI and uploads the bytecode dump to prepare for provenance and MVR registration."
-author: "zktx.io"
+name: 'Sui MVR Provenance'
+description: 'Builds a Move package using the Sui CLI and uploads the bytecode dump to prepare for provenance and MVR registration.'
+author: 'zktx.io'
 branding:
-  icon: "package"
-  color: "blue"
+  icon: 'package'
+  color: 'blue'
 
 inputs:
   working-directory:
-    description: "Path to the Move project directory (should contain Move.toml)"
+    description: 'Path to the Move project directory (should contain Move.toml)'
     required: true
-    default: "."
+    default: '.'
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Set up Homebrew (for installing Sui CLI)
       uses: Homebrew/actions/setup-homebrew@master
