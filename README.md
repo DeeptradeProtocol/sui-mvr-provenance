@@ -20,6 +20,7 @@ Every deployment includes:
   uses: zktx-io/sui-mvr-provenance@v0.3.8
   with:
     working-directory: my-move-package
+    sui-version: '1.62.1' # optional, defaults to '1.62.1'
   env:
     ED25519_PRIVATE_KEY: ${{ secrets.ED25519_PRIVATE_KEY }}
     GIT_SIGNER_PIN: ${{ secrets.GIT_SIGNER_PIN }} # optional

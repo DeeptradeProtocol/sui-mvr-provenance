@@ -10,18 +10,67 @@ inputs:
     description: 'Path to the Move project directory (should contain Move.toml)'
     required: true
     default: '.'
+  sui-version:
+    description: 'Version of Sui to install'
+    required: true
+    default: '1.62.1'
 
 runs:
   using: 'composite'
   steps:
-    - name: Set up Homebrew (for installing Sui CLI)
-      uses: Homebrew/actions/setup-homebrew@master
-
-    - name: Install Sui CLI
+    - name: Install Sui v${{ inputs.sui-version }}
       shell: bash
       run: |
-        echo "Installing Sui CLI..."
-        brew install sui
+        echo "Installing Sui v${{ inputs.sui-version }}..."
+        mkdir -p $HOME/sui-bin
+
+        SUI_URL="https://github.com/MystenLabs/sui/releases/download/mainnet-v${{ inputs.sui-version }}/sui-mainnet-v${{ inputs.sui-version }}-ubuntu-x86_64.tgz"
+        echo "Downloading Sui from $SUI_URL"
+
+        # Use curl with fail flag and check response
+        HTTP_STATUS=$(curl -o sui.tar.gz -w "%{http_code}" -L $SUI_URL)
+
+        if [[ "$HTTP_STATUS" -ne 200 ]]; then
+          echo "Error: Failed to download Sui. HTTP Status: $HTTP_STATUS"
+          exit 1
+        fi
+
+        if ! file sui.tar.gz | grep -q "gzip compressed"; then
+          echo "Error: Downloaded file is not a valid tar.gz archive."
+          exit 1
+        fi
+
+        tar -xvzf sui.tar.gz -C $HOME/sui-bin
+        chmod +x $HOME/sui-bin/sui
+        echo "$HOME/sui-bin" >> $GITHUB_PATH
+        export PATH="$HOME/sui-bin:$PATH"
+
+        # Verify installation
+        sui --version
+    
+    - name: Configure Sui Client
+      shell: bash
+      run: |
+        echo "Configuring Sui Client..."
+        mkdir -p $HOME/.sui/sui_config
+        
+        # Create empty keystore
+        echo '[]' > $HOME/.sui/sui_config/sui.keystore
+        
+        # Create client.yaml
+        cat <<EOF > $HOME/.sui/sui_config/client.yaml
+        ---
+        keystore:
+          File: $HOME/.sui/sui_config/sui.keystore
+        envs:
+          - alias: mainnet
+            rpc: "https://fullnode.mainnet.sui.io:443"
+            ws: ~
+            basic_auth: ~
+        active_env: mainnet
+        EOF
+        
+        echo "Sui Client configured at $HOME/.sui/sui_config/client.yaml"
 
     - name: Checkout code
       uses: actions/checkout@v4
@@ -31,8 +80,9 @@ runs:
       run: |
         set -euo pipefail
         cd "${{ inputs.working-directory }}"
-        echo "Running sui move build..."
-        sui move build --dump-bytecode-as-base64 --ignore-chain >> bytecode.dump.json
+        echo "Running sui move build... (with bytecode dump)"
+        sui move build --dump-bytecode-as-base64 >> bytecode.dump.json
+        echo "Sui move build completed. Bytecode dump saved to bytecode.dump.json"
 
     - name: Upload Bytecode Dump
       uses: actions/upload-artifact@v4

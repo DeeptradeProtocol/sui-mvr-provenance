@@ -12,7 +12,10 @@ on:
         required: false
         type: string
         default: '.'
-
+      sui-version:
+        required: false
+        type: string
+        default: '1.62.1'
     secrets:
       GIT_SIGNER_PIN:
         required: false
@@ -23,9 +26,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: zktx-io/sui-mvr-provenance@v0.3.8
+      - uses: DeeptradeProtocol/sui-mvr-provenance@f85a2e6a7518dc99c0b04809263169939f1db884
         with:
           working-directory: ${{ inputs.working-directory }}
+          sui-version: ${{ inputs.sui-version }}
 
   extract:
     runs-on: ubuntu-latest
@@ -39,8 +43,8 @@ jobs:
       - name: Checkout provenance tool
         uses: actions/checkout@v4
         with:
-          repository: zktx-io/sui-mvr-provenance
-          ref: v0.3.8
+          repository: DeeptradeProtocol/sui-mvr-provenance
+          ref: f85a2e6a7518dc99c0b04809263169939f1db884
           path: provenance
 
       - name: Install dependencies
@@ -86,8 +90,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          repository: zktx-io/sui-mvr-provenance
-          ref: v0.3.8
+          repository: DeeptradeProtocol/sui-mvr-provenance
+          ref: f85a2e6a7518dc99c0b04809263169939f1db884
           path: temp
 
       - name: Deploy to Sui
@@ -220,8 +224,8 @@ jobs:
         if: steps.check_config.outputs.skip_mvr == 'false'
         uses: actions/checkout@v4
         with:
-          repository: zktx-io/sui-mvr-provenance
-          ref: v0.3.8
+          repository: DeeptradeProtocol/sui-mvr-provenance
+          ref: f85a2e6a7518dc99c0b04809263169939f1db884
           path: temp
 
       - name: Set Git metadata as environment variables
