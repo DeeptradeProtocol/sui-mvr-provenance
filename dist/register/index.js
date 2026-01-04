@@ -62482,23 +62482,25 @@ const main = async () => {
         core.setFailed(`❌ Name record not found for ${suins}`);
         process.exit(1);
     }
-    const { data } = await client.getObject({
-        id: record.nftId,
-        options: { showOwner: true, showType: true },
-    });
-    if (!data) {
-        core.setFailed(`❌ Object not found for ${suins}`);
-        process.exit(1);
-    }
-    if ((typeof data.owner === 'object' &&
-        'AddressOwner' in data.owner &&
-        data.owner.AddressOwner) !== config.owner) {
-        core.setFailed(`❌ Object ${record.nftId} is not owned by ${config.owner}. Current owner: ${data.owner.AddressOwner}`);
-        process.exit(1);
-    }
-    if (!data.type?.endsWith('::SuinsRegistration')) {
-        core.setFailed(`❌ Object ${record.nftId} is not a Suins object`);
-        process.exit(1);
+    if (suins !== 'pkg') {
+        const { data } = await client.getObject({
+            id: record.nftId,
+            options: { showOwner: true, showType: true },
+        });
+        if (!data) {
+            core.setFailed(`❌ Object not found for ${suins}`);
+            process.exit(1);
+        }
+        if ((typeof data.owner === 'object' &&
+            'AddressOwner' in data.owner &&
+            data.owner.AddressOwner) !== config.owner) {
+            core.setFailed(`❌ Object ${record.nftId} is not owned by ${config.owner}. Current owner: ${data.owner.AddressOwner}`);
+            process.exit(1);
+        }
+        if (!data.type?.endsWith('::SuinsRegistration')) {
+            core.setFailed(`❌ Object ${record.nftId} is not a Suins object`);
+            process.exit(1);
+        }
     }
     const registryObj = await suinsClient.getNameRecord('registry-obj@mvr');
     const cache = await (0, mvrResolver_1.mvrResolver)(['@mvr/core', '@mvr/metadata', config.app_name], config.network);
