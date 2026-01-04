@@ -48,6 +48,30 @@ runs:
 
         # Verify installation
         sui --version
+    
+    - name: Configure Sui Client
+      shell: bash
+      run: |
+        echo "Configuring Sui Client..."
+        mkdir -p $HOME/.sui/sui_config
+        
+        # Create empty keystore
+        echo '[]' > $HOME/.sui/sui_config/sui.keystore
+        
+        # Create client.yaml
+        cat <<EOF > $HOME/.sui/sui_config/client.yaml
+        ---
+        keystore:
+          File: $HOME/.sui/sui_config/sui.keystore
+        envs:
+          - alias: mainnet
+            rpc: "https://fullnode.mainnet.sui.io:443"
+            ws: ~
+            basic_auth: ~
+        active_env: mainnet
+        EOF
+        
+        echo "Sui Client configured at $HOME/.sui/sui_config/client.yaml"
 
     - name: Checkout code
       uses: actions/checkout@v4
